@@ -30,4 +30,7 @@ public class AccountService {
         return accounts.merge(id, -amount, Integer::sum);
     }
 
+    public void reset() {
+        accounts.clear();
+    }
 }
