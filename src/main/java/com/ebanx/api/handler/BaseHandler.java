@@ -36,4 +36,8 @@ public abstract class BaseHandler implements HttpHandler {
         Matcher m = Pattern.compile("\"" + field + "\"\\s*:\\s*(-?\\d+)").matcher(json);
         return m.find() ? Integer.parseInt(m.group(1)) : null;
     }
+
+    protected boolean isPositiveInteger(String value) {
+        return value != null && value.matches("^[1-9]\\d*$");
+    }
 }
