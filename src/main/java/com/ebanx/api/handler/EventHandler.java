@@ -34,7 +34,7 @@ public class EventHandler extends BaseHandler {
         Integer amount = extractInt(body, "amount");
 
         try {
-            if (!isPositiveInteger(amount.toString())) {
+            if (amount == null || !isPositiveInteger(amount.toString())) {
                 throw new BadRequestException();
             }
 
