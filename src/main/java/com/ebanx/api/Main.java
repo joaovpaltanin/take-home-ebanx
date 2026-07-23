@@ -2,6 +2,7 @@ package com.ebanx.api;
 
 import com.ebanx.api.handler.BalanceHandler;
 import com.ebanx.api.handler.EventHandler;
+import com.ebanx.api.handler.ResetHandler;
 import com.ebanx.api.service.AccountService;
 import com.sun.net.httpserver.HttpServer;
 
@@ -17,6 +18,7 @@ public class Main {
         HttpServer server = HttpServer.create(new InetSocketAddress(port), 0);
         server.createContext("/balance", new BalanceHandler(service));
         server.createContext("/event", new EventHandler(service));
+        server.createContext("/reset", new ResetHandler(service));
         server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         server.start();
 
