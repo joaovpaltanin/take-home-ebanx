@@ -1,5 +1,6 @@
 package com.ebanx.api.handler;
 
+import com.ebanx.api.exception.BadRequestException;
 import com.ebanx.api.exception.NotFoundException;
 import com.ebanx.api.service.AccountService;
 import com.sun.net.httpserver.HttpExchange;
@@ -19,20 +20,17 @@ public class BalanceHandler extends BaseHandler {
         String query = exchange.getRequestURI().getRawQuery();
         String rawAccountId = extractQueryParam(query, "account_id");
 
-        if (!isPositiveInteger(rawAccountId)) {
-            sendResponse(exchange, 400, "0");
-            return;
-        }
-
         try {
+            if (!isPositiveInteger(rawAccountId)) {
+                throw new BadRequestException();
+            }
+
             Integer balance = service.getBalance(rawAccountId);
             sendResponse(exchange, 200, balance.toString());
+        } catch (BadRequestException e) {
+            sendResponse(exchange, 400, "0");
         } catch (NotFoundException e) {
             sendResponse(exchange, 404, "0");
         }
-    }
-
-    private boolean isPositiveInteger(String value) {
-        return value != null && value.matches("^[1-9]\\d*$");
     }
 }

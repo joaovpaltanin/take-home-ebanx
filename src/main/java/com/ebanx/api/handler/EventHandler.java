@@ -1,11 +1,14 @@
 package com.ebanx.api.handler;
 
+import com.ebanx.api.exception.BadRequestException;
+import com.ebanx.api.exception.NotFoundException;
 import com.ebanx.api.service.AccountService;
 import com.sun.net.httpserver.HttpExchange;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Optional;
 
 public class EventHandler extends BaseHandler {
 
@@ -30,14 +33,20 @@ public class EventHandler extends BaseHandler {
         String destination = extractString(body, "destination");
         Integer amount = extractInt(body, "amount");
 
-        EventAction action = actions.get(type);
+        try {
+            if (!isPositiveInteger(amount.toString())) {
+                throw new BadRequestException();
+            }
 
-        if (action == null) {
+            EventAction action = Optional.ofNullable(actions.get(type))
+                    .orElseThrow(BadRequestException::new);
+
+            action.execute(exchange, origin, destination, amount);
+        } catch (BadRequestException e) {
             sendResponse(exchange, 400, "0");
-            return;
+        } catch (NotFoundException e) {
+            sendResponse(exchange, 404, "0");
         }
-
-        action.execute(exchange, origin, destination, amount);
     }
 
     private void handleDeposit(HttpExchange exchange, String origin, String destination, Integer amount) throws IOException {
@@ -50,10 +59,6 @@ public class EventHandler extends BaseHandler {
     }
 
     private void handleWithdraw(HttpExchange exchange, String origin, String destination, Integer amount) throws IOException {
-        if (!service.exists(origin)) {
-            sendResponse(exchange, 404, "0");
-            return;
-        }
         int balance = service.withdraw(origin, amount);
         String json = String.format(
                 "{\"origin\":{\"id\":\"%s\",\"balance\":%d}}",
@@ -63,10 +68,6 @@ public class EventHandler extends BaseHandler {
     }
 
     private void handleTransfer(HttpExchange exchange, String origin, String destination, Integer amount) throws IOException {
-        if (!service.exists(origin)) {
-            sendResponse(exchange, 404, "0");
-            return;
-        }
         int originBalance = service.withdraw(origin, amount);
         int destinationBalance = service.deposit(destination, amount);
         String json = String.format(
