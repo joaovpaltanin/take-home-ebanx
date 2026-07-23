@@ -15,4 +15,19 @@ public class AccountService {
 
         return balance;
     }
+
+    public boolean exists(String id) {
+        return accounts.containsKey(id);
+    }
+
+    public int deposit(String id, int amount) {
+        return accounts.merge(id, amount, Integer::sum);
+    }
+
+    public int withdraw(String id, int amount) {
+        if (!exists(id)) throw new NotFoundException();
+
+        return accounts.merge(id, -amount, Integer::sum);
+    }
+
 }
