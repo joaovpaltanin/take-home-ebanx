@@ -1,39 +1,65 @@
 # Take Home EBANX API
 
-API HTTP simples que simula operações bancárias em memória: consulta de saldo, depósito, saque e transferência. Construída em Java puro, usando apenas a biblioteca padrão (`com.sun.net.httpserver.HttpServer`), sem frameworks externos.
+API HTTP simples que simula operações bancárias em memória: consulta de saldo, depósito, saque e transferência. Construída em Java puro, usando apenas a biblioteca padrão (`com.sun.net.httpserver.HttpServer`), sem frameworks web externos.
 
 ## Requisitos
 
 - Java 21+ (o projeto usa virtual threads via `Executors.newVirtualThreadPerTaskExecutor()`)
+- Maven 3.9+ (para compilar, testar e empacotar)
 
 ## Estrutura do projeto
 
 ```
-com.ebanx.api
-├── Main.java                     # Ponto de entrada, sobe o servidor na porta 8080
-├── handler
-│   ├── BaseHandler.java           # Métodos utilitários (parsing de query/JSON, envio de resposta)
-│   ├── BalanceHandler.java        # GET /balance
-│   ├── EventHandler.java          # POST /event
-│   └── ResetHandler.java          # POST /reset
-├── service
-│   └── AccountService.java        # Regras de negócio e armazenamento em memória
-└── exception
-    ├── BadRequestException.java
-    └── NotFoundException.java
+.
+├── pom.xml
+└── src
+    ├── main
+    │   └── java
+    │       └── com
+    │           └── ebanx
+    │               └── api
+    │                   ├── Main.java                     # Ponto de entrada, sobe o servidor na porta 8080
+    │                   ├── handler
+    │                   │   ├── BaseHandler.java          # Métodos utilitários (parsing de query/JSON, envio de resposta)
+    │                   │   ├── BalanceHandler.java     # GET /balance
+    │                   │   ├── EventHandler.java         # POST /event
+    │                   │   └── ResetHandler.java         # POST /reset
+    │                   ├── service
+    │                   │   ├── AccountService.java        # Regras de negócio e armazenamento em memória
+    │                   │   └── TransferResult.java       # Record com saldos após uma transferência
+    │                   └── exception
+    │                       ├── BadRequestException.java
+    │                       ├── InsufficientFundsException.java
+    │                       └── NotFoundException.java
+    └── test
+        └── java
+            └── com
+                └── ebanx
+                    └── api
+                        └── service
+                            └── AccountServiceTest.java  # Testes unitários com JUnit 5
 ```
 
 ## Como rodar
 
 ```bash
-# Compilar
-javac -d out $(find src -name "*.java")
+# Compilar e rodar os testes
+mvn test
 
-# Executar
-java -cp out com.ebanx.api.Main
+# Empacotar em um JAR executável
+mvn package
+
+# Executar o JAR gerado
+java -jar target/take-home-ebanx-1.0.0.jar
 ```
 
 O servidor sobe em `http://localhost:8080`.
+
+> Também é possível compilar manualmente sem o Maven, desde que o Java 21+ esteja instalado:
+> ```bash
+> javac -d out $(find src/main/java -name "*.java")
+> java -cp out com.ebanx.api.Main
+> ```
 
 ## Endpoints
 
@@ -66,7 +92,16 @@ POST /reset
 
 Executa uma operação bancária. O corpo é um JSON com o campo `type`, que pode ser `deposit`, `withdraw` ou `transfer`.
 
+Respostas de erro comuns:
+
+| Status | Condição |
+|--------|----------|
+| 400 | `type` desconhecido, `amount` ausente, zero ou negativo, ou IDs inválidos |
+| 404 | Conta informada não existe |
+
 #### `deposit`
+
+Cria a conta de destino caso ela não exista.
 
 ```json
 // Request
@@ -78,6 +113,8 @@ Executa uma operação bancária. O corpo é um JSON com o campo `type`, que pod
 
 #### `withdraw`
 
+Saca de uma conta existente. Rejeita a operação se o saldo for insuficiente.
+
 ```json
 // Request
 { "type": "withdraw", "origin": "100", "amount": 5 }
@@ -85,9 +122,15 @@ Executa uma operação bancária. O corpo é um JSON com o campo `type`, que pod
 // Response 201
 { "origin": { "id": "100", "balance": 5 } }
 ```
-Retorna **404** se a conta de origem não existir.
+
+| Status | Condição |
+|--------|----------|
+| 404 | Conta de origem não existe |
+| 500 | Saldo insuficiente (a exceção `InsufficientFundsException` não é mapeada no handler atual) |
 
 #### `transfer`
+
+Transfere valores entre duas contas existentes. A operação é atômica (sincronizada) e, em caso de erro, nenhum valor é movimentado.
 
 ```json
 // Request
@@ -99,12 +142,17 @@ Retorna **404** se a conta de origem não existir.
   "destination": { "id": "300", "balance": 15 }
 }
 ```
-Retorna **404** se a conta de origem não existir.
 
-Em qualquer operação, um `amount` inválido (ausente ou não positivo) ou um `type` desconhecido retorna **400**.
+| Status | Condição |
+|--------|----------|
+| 400 | `origin` ou `destination` ausentes, vazios ou inválidos |
+| 404 | Conta de origem não existe |
+| 500 | Saldo insuficiente na origem |
 
 ## Detalhes técnicos
 
 - **Armazenamento**: em memória, via `ConcurrentHashMap`. Os dados são perdidos ao reiniciar o servidor ou ao chamar `/reset`.
 - **Parsing de JSON**: feito com regex simples (`extractString` / `extractInt`), sem biblioteca externa. Funciona para o formato plano usado pela API, mas não é um parser JSON genérico.
 - **Concorrência**: cada requisição é tratada em uma virtual thread.
+- **Atomicidade**: transferências são sincronizadas para evitar estados inconsistentes quando ocorrem erros (ex.: fundos insuficientes ou destino inválido).
+- **Testes**: cobrem depósito, saque, consulta de saldo, reset, fundos insuficientes e atomicidade da transferência.
