@@ -3,6 +3,7 @@ package com.ebanx.api.handler;
 import com.ebanx.api.exception.BadRequestException;
 import com.ebanx.api.exception.NotFoundException;
 import com.ebanx.api.service.AccountService;
+import com.ebanx.api.service.TransferResult;
 import com.sun.net.httpserver.HttpExchange;
 
 import java.io.IOException;
@@ -68,11 +69,10 @@ public class EventHandler extends BaseHandler {
     }
 
     private void handleTransfer(HttpExchange exchange, String origin, String destination, Integer amount) throws IOException {
-        int originBalance = service.withdraw(origin, amount);
-        int destinationBalance = service.deposit(destination, amount);
+        TransferResult result = service.transfer(origin, destination, amount);
         String json = String.format(
                 "{\"origin\":{\"id\":\"%s\",\"balance\":%d},\"destination\":{\"id\":\"%s\",\"balance\":%d}}",
-                origin, originBalance, destination, destinationBalance
+                origin, result.originBalance(), destination, result.destinationBalance()
         );
         sendJson(exchange, 201, json);
     }

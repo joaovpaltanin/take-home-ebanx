@@ -30,6 +30,13 @@ public class AccountService {
         return accounts.merge(id, -amount, Integer::sum);
     }
 
+    public TransferResult transfer(String origin, String destination, int amount) {
+        int originBalance = withdraw(origin, amount);
+        int destinationBalance = deposit(destination, amount);
+
+        return new TransferResult(originBalance, destinationBalance);
+    }
+
     public void reset() {
         accounts.clear();
     }
