@@ -1,5 +1,6 @@
 package com.ebanx.api.service;
 
+import com.ebanx.api.exception.InsufficientFundsException;
 import com.ebanx.api.exception.NotFoundException;
 
 import java.util.Map;
@@ -25,9 +26,14 @@ public class AccountService {
     }
 
     public int withdraw(String id, int amount) {
-        if (!exists(id)) throw new NotFoundException();
+        Integer updatedBalance = accounts.computeIfPresent(id, (accountId, balance) -> {
+            if (balance < amount) throw new InsufficientFundsException();
+            return balance - amount;
+        });
 
-        return accounts.merge(id, -amount, Integer::sum);
+        if (updatedBalance == null) throw new NotFoundException();
+
+        return updatedBalance;
     }
 
     public TransferResult transfer(String origin, String destination, int amount) {

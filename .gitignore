@@ -5,6 +5,7 @@
 *.ipr
 out/
 .idea_modules/
+htmlReport
 
 # Arquivos de configuração sensíveis/locais do IntelliJ (descomente se quiser ignorar)
 .idea/workspace.xml
@@ -28,6 +29,11 @@ out/
 *.rar
 hs_err_pid*
 replay_pid*
+
+### Maven ###
+target/
+!.mvn/wrapper/maven-wrapper.jar
+.mvn/timing.properties
 
 ### Eclipse ###
 .apt_generated
