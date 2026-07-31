@@ -43,9 +43,9 @@ public class EventHandler extends BaseHandler {
 
             action.execute(exchange, origin, destination, amount);
         } catch (BadRequestException e) {
-            sendResponse(exchange, 400, "0");
+            sendText(exchange, 400, "0");
         } catch (NotFoundException e) {
-            sendResponse(exchange, 404, "0");
+            sendText(exchange, 404, "0");
         }
     }
 
@@ -55,7 +55,7 @@ public class EventHandler extends BaseHandler {
                 "{\"destination\":{\"id\":\"%s\",\"balance\":%d}}",
                 destination, balance
         );
-        sendResponse(exchange, 201, json);
+        sendJson(exchange, 201, json);
     }
 
     private void handleWithdraw(HttpExchange exchange, String origin, String destination, Integer amount) throws IOException {
@@ -64,7 +64,7 @@ public class EventHandler extends BaseHandler {
                 "{\"origin\":{\"id\":\"%s\",\"balance\":%d}}",
                 origin, balance
         );
-        sendResponse(exchange, 201, json);
+        sendJson(exchange, 201, json);
     }
 
     private void handleTransfer(HttpExchange exchange, String origin, String destination, Integer amount) throws IOException {
@@ -74,7 +74,7 @@ public class EventHandler extends BaseHandler {
                 "{\"origin\":{\"id\":\"%s\",\"balance\":%d},\"destination\":{\"id\":\"%s\",\"balance\":%d}}",
                 origin, originBalance, destination, destinationBalance
         );
-        sendResponse(exchange, 201, json);
+        sendJson(exchange, 201, json);
     }
 
     @FunctionalInterface

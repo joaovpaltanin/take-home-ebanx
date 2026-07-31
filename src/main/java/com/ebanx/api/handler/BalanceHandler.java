@@ -26,11 +26,11 @@ public class BalanceHandler extends BaseHandler {
             }
 
             Integer balance = service.getBalance(rawAccountId);
-            sendResponse(exchange, 200, balance.toString());
+            sendText(exchange, 200, balance.toString());
         } catch (BadRequestException e) {
-            sendResponse(exchange, 400, "0");
+            sendText(exchange, 400, "0");
         } catch (NotFoundException e) {
-            sendResponse(exchange, 404, "0");
+            sendText(exchange, 404, "0");
         }
     }
 }

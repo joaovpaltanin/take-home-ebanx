@@ -15,6 +15,6 @@ public class ResetHandler extends BaseHandler {
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         service.reset();
-        sendResponse(exchange, 200, "OK");
+        sendText(exchange, 200, "OK");
     }
 }

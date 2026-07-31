@@ -19,9 +19,17 @@ public abstract class BaseHandler implements HttpHandler {
         return query.substring(prefix.length());
     }
 
-    protected void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
+    protected void sendJson(HttpExchange exchange, int statusCode, String response) throws IOException {
+        sendResponse(exchange, statusCode, response, "application/json; charset=UTF-8");
+    }
+
+    protected void sendText(HttpExchange exchange, int statusCode, String response) throws IOException {
+        sendResponse(exchange, statusCode, response, "text/plain; charset=UTF-8");
+    }
+
+    private void sendResponse(HttpExchange exchange, int statusCode, String response, String contentType) throws IOException {
         byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
-        exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+        exchange.getResponseHeaders().set("Content-Type", contentType);
         exchange.sendResponseHeaders(statusCode, bytes.length);
         exchange.getResponseBody().write(bytes);
         exchange.close();

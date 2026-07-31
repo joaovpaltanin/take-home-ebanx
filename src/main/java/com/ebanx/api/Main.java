@@ -22,6 +22,6 @@ public class Main {
         server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         server.start();
 
-        System.out.println("Servidor rodando");
+        System.out.println("Server running on port " + port);
     }
 }
