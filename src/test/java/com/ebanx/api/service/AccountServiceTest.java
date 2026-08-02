@@ -130,6 +130,33 @@ class AccountServiceTest {
     }
 
     @Nested
+    @DisplayName("transferência com sucesso")
+    class Transfer {
+
+        @ParameterizedTest
+        @DisplayName("dado saldo suficiente, quando transferir, então os saldos de origem e destino são atualizados")
+        @CsvSource({
+                "10, 5, 5, 5",
+                "20, 20, 0, 20",
+                "15, 1, 14, 1"})
+        void givenSufficientBalance_whenTransferring_thenBothBalancesAreUpdated(
+                int originInitial,
+                int amount,
+                int expectedOriginBalance,
+                int expectedDestinationBalance) {
+
+            service.deposit("100", originInitial);
+
+            TransferResult result = service.transfer("100", "300", amount);
+
+            assertEquals(expectedOriginBalance, result.originBalance());
+            assertEquals(expectedDestinationBalance, result.destinationBalance());
+            assertEquals(expectedOriginBalance, service.getBalance("100"));
+            assertEquals(expectedDestinationBalance, service.getBalance("300"));
+        }
+    }
+
+    @Nested
     @DisplayName("fundos insuficientes")
     class InsufficientFunds {
 
